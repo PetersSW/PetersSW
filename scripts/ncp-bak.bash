@@ -3,8 +3,8 @@
 # move ncp backup to backup server (remote) #
 # ----------------------------------------- #
 # author:  Peter H. Späth                   #
-# date:    February 12, 2025                #
-# version: 3.0                              #
+# date:    April 01, 2025                   #
+# version: 3.1                              #
 #############################################
 
 #############################################
@@ -54,11 +54,9 @@ then
          # is enough remote storage available
          remoteStorageAvailable=$((1024 * `ssh ${remoteUser}@${remoteHost} df --output=avail ${remoteBackupDir} | tail -n1`))
          fileSize=`stat -c '%s' ${localBackupDir}/${file}`
-# echo "remoteStorage: ${remoteStorageAvailable} > ${fileSize}"
-         if [ ${remoteStorageAvailable} -gt ${fileSize} ]
+         if [ ${remoteStorageAvailable} -gt $((2 * ${fileSize})) ]
          then 
             echo -e "`date`\terrCode ${errCode} transfer of file ${file} started" &>>${logFile}
-#            echo -e "size of ${file} is `stat -c '%s' ${localBackupDir}/${file}`"
             # copy backup to remote server
             scp -Bqp ${localBackupDir}/${file} ${remoteUser}@${remoteHost}:${remoteBackupDir} &>>${logFile}
             if [ $? -gt 0 ]
@@ -70,7 +68,7 @@ then
             fi
          else
             errCode=3
-            echo -e "`date`\terrCode ${errCode} not enough remote storage" &>>${logFile}
+            echo -e "`date`\terrCode ${errCode} not enough remote storage to store ${file}" &>>${logFile}
          fi
       done
    fi
